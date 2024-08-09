@@ -1,34 +1,32 @@
-const SHAKE_THRESHOLD = 15; // 감지 임계값, 가속도 변화가 이 값을 넘으면 흔들림으로 간주
-let lastY = 0; 
-let lastShakeTime = 0;
-const SHAKE_TIME_THRESHOLD = 500; // 밀리초 단위, 너무 빈번한 감지를 막기 위한 시간 간격
+const SHAKE_THRESHOLD = 15; // 흔들림 감지 임계값
+let lastY = 0;
+let shaking = false; // 현재 흔들림 상태를 추적
+const SHAKE_TIME_THRESHOLD = 500; // 흔들림 감지 후 색상 복구 시간
 
 function detectShakeDirection(currentY) {
     const deltaY = currentY - lastY;
     lastY = currentY;
 
     if (Math.abs(deltaY) > SHAKE_THRESHOLD) {
-        if (deltaY > 0) {
-            return '아래로 흔들었어!';
-        } else {
-            return '위로 흔들었어!';
-        }
+        shaking = true;
+        document.body.style.backgroundColor = 'red'; // 흔들림이 감지되면 배경을 빨간색으로 변경
+        return;
     }
-    return null;
+}
+
+function resetBackgroundColor() {
+    shaking = false;
+    document.body.style.backgroundColor = 'white'; // 평소에는 흰색으로 유지
 }
 
 window.addEventListener('devicemotion', function(event) {
     const currentY = event.accelerationIncludingGravity.y;
-    const currentTime = new Date().getTime();
 
-    // 너무 빈번한 감지를 방지하기 위해 시간 간격 설정
-    if ((currentTime - lastShakeTime) > SHAKE_TIME_THRESHOLD) {
-        const shakeDirection = detectShakeDirection(currentY);
+    detectShakeDirection(currentY);
 
-        if (shakeDirection) {
-            lastShakeTime = currentTime; // 마지막 감지 시간을 갱신
-            document.getElementById('status').innerText = shakeDirection;
-            document.getElementById('shake-info').innerText = `Y축 가속도: ${currentY.toFixed(2)}`;
-        }
+    // 흔들림 감지 후 일정 시간 지나면 배경색 복구
+    if (shaking) {
+        clearTimeout(resetTimeout);
+        var resetTimeout = setTimeout(resetBackgroundColor, SHAKE_TIME_THRESHOLD);
     }
 });
